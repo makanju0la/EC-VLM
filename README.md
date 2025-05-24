@@ -88,7 +88,12 @@ python train.py
 ```
 
 ### Step 2: Generating EC Corpora
+The next step in the EC-Pretraining experiment, after training the referential game, is to convert the natural language of the pretraining dataset of the specific VLM you are working on to an EC version. Run the following code for the conversion:
 
+```bash
+cd EC-Pretraining/scripts/corpus-generation
+bash convert.sh
+```
 
 
 
