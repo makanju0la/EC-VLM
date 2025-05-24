@@ -1,0 +1,424 @@
+
+import os
+from PIL import Image
+from io import BytesIO
+import base64
+import torchvision
+from torchvision import models, transforms
+import torch
+import torch.nn as nn
+import argparse
+import requests
+from urllib import request
+import json
+
+import matplotlib.pyplot as plt
+
+from models import SingleAgent
+
+class Identity(nn.Module):
+    def __init__(self):
+        super(Identity, self).__init__()
+    def forward(self, x):
+        return x
+
+def get_image_encoder() -> torch.nn.Module:
+    img_encoder = models.resnet18(weights=torchvision.models.ResNet18_Weights.DEFAULT)
+    img_encoder.fc = Identity()
+    return img_encoder
+
+def img_string_to_img(img_str):
+    imgdata = base64.b64decode(img_str)
+    img = Image.open(BytesIO(imgdata))
+    img = img.convert('RGB')
+    return img
+
+def img_string_to_img_from_url(img_url):
+    img = Image.open(requests.get(img_url, stream=True).raw)
+    img = img.convert('RGB')
+    return img
+
+def comm_action_to_string(ca):
+    ec_caption = " ".join([str(token) for token in ca.squeeze(0).tolist()])
+    return ec_caption
+
+transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(
+    mean=[0.485, 0.456, 0.406],
+    std=[0.229, 0.224, 0.225]
+    )])
+
+def build_pretraining_dataset_from_llava(args):
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    image_folder = args.image_folder
+    in_split = args.in_split
+    outfile = args.outfile
+
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Loaded model {model}")
+    print(f"Making image transform {transform}")
+    print("Beginning split ->  data conversion (ec)")
+    
+    with open(in_split, 'r') as file:
+        json_data = json.load(file)
+    count = 0
+    file_length = 595375
+    for item in json_data:  
+        count += 1
+        image_file = item['image']
+
+        image_path = os.path.join(image_folder, image_file)
+        try:
+            img = Image.open(image_path).convert('RGB')
+        except:
+            continue
+        else:
+            features = img_encoder(transform(img).unsqueeze(0))
+            comm_action = model.generate_ec(features.cuda())
+            new = comm_action_to_string(comm_action)
+            for conversation in item['conversations']:
+                if conversation['from'] == 'gpt':
+                    conversation['value'] = new
+        
+        if count % 200 == 0:
+            print()
+            print(f"Converted {count} lines from caption data to ec pretrain format")
+            print(f'{new} at #{count}')
+            print(f"{round((count/file_length) *100, 2)}% has been processed; {round((1 - (count/file_length)) * 100, 2)}% remaining")
+    with open(outfile, 'w') as ofile:
+        json.dump(json_data, ofile, indent=2)
+
+def build_pretraining_dataset_from_llava1_5(args):
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    image_folder = args.image_folder
+    in_split = args.in_split
+    outfile = args.outfile
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Loaded model {model}")
+    print(f"Making image transform {transform}")
+    print("Beginning split ->  data conversion (ec)")
+    
+    file_length = 10000
+    with open(in_split, 'r') as file:
+        json_data = json.load(file)
+    json_data_10k = json_data[:file_length]
+    
+    print("file length: ", file_length)
+    for ind, item in enumerate(json_data_10k):  
+        image_file = item['image']
+        
+        # Create the full image path
+        image_path = os.path.join(image_folder, image_file)
+        try:
+            img = Image.open(image_path).convert('RGB')
+        except:
+            continue
+        else:
+            features = img_encoder(transform(img).unsqueeze(0))
+            comm_action = model.generate_ec(features.cuda())
+            new = comm_action_to_string(comm_action)
+            for conversation in item['conversations']:
+                if conversation['from'] == 'gpt':
+                    conversation['value'] = new
+        
+        if ind % 200 == 0:
+            print()
+            print(f"Converted {ind} lines from caption data to ec pretrain format")
+            print(f'{new} at #{ind}')
+            print(f"{round((ind/file_length) *100, 2)}% has been processed; {round((1 - (ind/file_length)) * 100, 2)}% remaining")
+    with open(outfile, 'w') as ofile:
+        json.dump(json_data_10k, ofile, indent=2)
+
+def build_pretraining_dataset_from_COCO(args):
+    """
+        refcoco first 10,000 ec tokens generated by speaker agent with sequence length 5, 15, 25. 
+        Generated from the original COCO dataset (train2014)
+    """
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    image_folder = args.image_folder
+    in_split = args.in_split
+    outfile = args.outfile
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Loaded model {model}")
+    print(f"Making image transform {transform}")
+    print("Beginning split ->  data conversion (ec)")
+    
+    images = os.listdir(image_folder)
+    
+    file_length = 10000
+
+    with open(outfile, "w") as fout: 
+        for i in range(file_length):
+            ind_image_file = images[i]
+            ind_image_path = os.path.join(image_folder, ind_image_file)
+            try:
+                img = Image.open(ind_image_path).convert('RGB')
+            except:
+                continue
+            else:
+                features = img_encoder(transform(img).unsqueeze(0))
+                comm_action = model.generate_ec(features.cuda())
+                new = comm_action_to_string(comm_action)
+                fout.write(new + "\n")
+            
+            if i % 200 == 0:
+                print()
+                print(f"Converted {i} lines from caption data to ec pretrain format")
+                print(f'{new} at #{i}')
+                print(f"{round((i/file_length) *100, 2)}% has been processed; {round((1 - (i/file_length)) * 100, 2)}% remaining")
+
+def build_pretraining_dataset_VQA_EC_Unigram(args):
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    in_split = args.in_split
+    outfile = args.outfile
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Loaded model {model}")
+    print(f"Making image transform {transform}")
+    print("Beginning split -> pretraining VQA data conversion (ec)")
+    fi = open(in_split, "r")
+    file_length = 10000
+    with open(outfile, "w") as fo:
+        for i, line in enumerate(fi):
+            if i >= file_length:
+                break
+            uid, imgid, question, answer, preds, img_str, num = line.split("\t")
+            img_str = img_str.strip()
+            img = img_string_to_img(img_str)
+            features = img_encoder(transform(img).unsqueeze(0))
+            comm_action = model.generate_ec(features.cuda())
+            new = comm_action_to_string(comm_action)
+            fo.write(new + "\n")
+
+            if i % 200 == 0:
+                print()
+                print(f"Converted {i} lines from vqa data to ec pretrain format")
+                print(f'{new} at #{i}')
+                print(f"{round((i/file_length) *100, 2)}% has been processed; {round((1 - (i/file_length)) * 100, 2)}% remaining")
+    fi.close()
+
+def build_pretraining_dataset_from_cc_Sbu_folder(args):
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    in_split = args.in_split
+    outfile = args.outfile
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Loaded model {model}")
+    print(f"Making image transform {transform}")
+    print("Beginning split ->  data conversion (ec)")
+    
+    json_lst = []
+    count = 0
+    folder_dir_lst = os.listdir(in_split)
+    for file in folder_dir_lst:
+        count += 1
+        current_path = os.path.join(in_split, file)
+        try:
+            img = Image.open(current_path).convert('RGB')
+        except:
+            continue
+        else:
+            features = img_encoder(transform(img).unsqueeze(0))
+            comm_action = model.generate_ec(features.cuda())
+            new = comm_action_to_string(comm_action)
+            img_dict = {"image_id": file[:-4], "caption": new}
+            json_lst.append(img_dict)
+
+        if count % 100 == 0:
+            print()
+            print(f"Converted {count} lines from caption data to ec pretrain format")
+            print(f"{round((count/len(folder_dir_lst)) *100, 2)}% has been processed; {round((1 - (count/len(folder_dir_lst))) * 100, 2)}% remaining")
+
+    json_output = {"annotations": json_lst}
+    with open(outfile, 'w') as fo:
+        fo.write(str(json_output))
+
+
+def build_pretraining_dataset_url(args):
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    in_split = args.in_split
+    outfile = args.outfile
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Loaded model {model}")
+    print(f"Making image transform {transform}")
+    print("Beginning split -> pretraining data conversion (ec)")
+    fi = open(in_split, "r")
+    data = json.load(fi)
+    print("Length of dataset: ", len(data))
+    fi.close()
+    count = 0
+    with open(outfile, 'w') as fo:
+        for i in range(len(data)):
+            count += 1
+            try:
+                res = request.urlopen(data[i]['url']).read()
+                img = Image.open(BytesIO(res)).convert('RGB')
+            except:
+                continue
+            else:
+                features = img_encoder(transform(img).unsqueeze(0))
+                comm_action = model.generate_ec(features.cuda())
+                new = comm_action_to_string(comm_action)
+                item = {"caption": new, "url": data[i]['url']}
+                fo.write(str(item)+"\n")
+                print(i)
+            if count % 100 == 0:
+                print()
+                print(f"Converted {count} lines from caption data to ec pretrain format")
+                print(f"{round((count/len(data)) *100, 2)}% has been processed; {round((1 - (count/len(data))) * 100, 2)}% remaining")
+
+def build_pretraining_dataset_ec(args):
+    print("Getting ResNet encoder...")
+    img_encoder = get_image_encoder()
+    print("Getting EC speaker")
+    model = SingleAgent(args)
+    model.load_state_dict(torch.load(args.load))
+    in_split = args.in_split
+    outfile = args.outfile
+    if not args.cpu:
+        torch.cuda.set_device(args.gpuid)
+        model = model.cuda()
+    print(f"Making image transform {transform}")
+    print("Beginning split -> pretraining data conversion (ec)")
+    fi = open(in_split, "r")
+    fo = open(outfile, "w")
+    dset_name = "refcoco_train"
+    task_name = "visual grounding"
+    count = 0
+    for line in fi:
+        count += 1
+        uid, imgid, refer_expression, bbox, img_str = line.split("\t")
+        img_str = img_str.strip()
+        img = img_string_to_img(img_str)
+        features = img_encoder(transform(img).unsqueeze(0))
+        comm_action = model.generate_ec(features.cuda())
+        new = comm_action_to_string(comm_action)
+
+        pline = f"{uid}\t{img_str}\t{new}\t\t\t{bbox}\t{dset_name}\t{task_name}\n"
+        fo.write(pline)
+
+        if count % 2000 == 0:
+            print(f"Converted {count} lines from vqa to ec pretrain format")
+    fo.close()
+    fi.close()
+        
+
+def build_pretraining_dataset_nl(args):
+    in_split = args.in_split
+    outfile = args.outfile
+    print("Beginning split -> pretraining data conversion (nl)")
+    fi = open(in_split, "r")
+    fo = open(outfile, "w")
+    dset_name = "refcoco_train"
+    task_name = "visual grounding"
+    count = 0
+    for line in fi:
+        count += 1
+        uid, imgid, refer_expression, bbox, img_str = line.split("\t")
+        img_str = img_str.strip()
+        pline = f"{uid}\t{img_str}\t{refer_expression}\t\t\t{bbox}\t{dset_name}\t{task_name}\n"
+        fo.write(pline)
+        if count % 2000 == 0:
+            print(f"Converted {count} lines from refcoco to nl pretrain format")
+    fo.close()
+    fi.close()
+
+def examine_pretrain_set(fpath):
+    with open(fpath, "r") as f:
+        for line in f:
+            sid, img, caption, question, answer, gto, dsetname, task_type = line.split("\t")
+            task_type = task_type.strip()
+            if (task_type != "qa"):
+                continue
+            print(f"id: {sid}")
+            print(f"caption: {caption}")
+            print(f"question: {question}")
+            print(f"answer: {answer}")
+            print(f"gto: {gto}")
+            print(f"dsetname: {dsetname}")
+            break
+
+if __name__ =="__main__":
+    parser = argparse.ArgumentParser(description='Create dataset from images.')
+    parser.add_argument('--image_folder', help='Folder that contains the images.', required=True)
+    parser.add_argument('--in_split', help='Path to file containing the VLM dataset with natural language captions.', required=True)
+    parser.add_argument('--outfile', help='Path to file where we want to save the converted EC data', required=True)
+    parser.add_argument("--dataset", type=str, default="cc", help="Which Image Dataset To Use EC Pretraining")
+    parser.add_argument("--vocab_size", type=int, default=4035, help="EC vocab size", required=True)
+    parser.add_argument("--seq_len", type=int, default=15, help="Max Len", required=True)
+    parser.add_argument("--save_every", type=int, default=100, help="Save model output.")
+    parser.add_argument("--num_games", type=int, default=1000,  help="Total number of batches to train for")
+    parser.add_argument("--extract", type=str, default="", help="extract")
+    parser.add_argument("--wandb", type=int, default=0, help="use wandb")
+    parser.add_argument("--gpuid", type=int, default=0, help="Which GPU to run")
+    parser.add_argument("--alpha", type=float, default=1.0)
+    parser.add_argument("--two_fc", action="store_true", default=False)
+    parser.add_argument("--batch_size", type=int, default=256, help="Batch size For Training")
+    parser.add_argument("--valid_batch_size", type=int, default=128, help="Batch size For Validation")
+    parser.add_argument("--num_dist", type=int, default=256, help="Number of Distracting Images For Training")
+    parser.add_argument("--num_dist_", type=int, default=128, help="Number of Distracting Images For Validation")
+    parser.add_argument("--D_img", type=int, default=2048, help="ResNet feature dimensionality")
+    parser.add_argument("--D_hid", type=int, default=512, help="Token embedding dimensionality")
+    parser.add_argument("--D_emb", type=int, default=256, help="Token embedding dimensionality")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--dropout", type=float, default=0.1, help="Dropout keep probability")
+    parser.add_argument("--temp", type=float, default=1.0, help="Gumbel temperature")
+    parser.add_argument("--hard", action="store_true", default=False, help="Hard Gumbel-Softmax Sampling.")
+    parser.add_argument("--TransferH", action="store_true", default=False, help="Hard Gumbel-Softmax Sampling.")
+    parser.add_argument("--print_every", type=int, default=50, help="Save model output.")
+    parser.add_argument("--ECemb", type=int, default=5000, help="Set The EC Embedding Size")
+    parser.add_argument("--valid_every", type=int, default=100, help="Validate model every k batches")
+    parser.add_argument("--grad_clip", type=float, default=1.0)
+    parser.add_argument("--num_directions", type=float, default=1)
+    parser.add_argument("--num_layers", type=int, default=1)
+    parser.add_argument("--unit_norm", action="store_true", default=False)
+    parser.add_argument("--cpu", action="store_true", default=False)
+    parser.add_argument("--loss_type", type=str, default="xent")
+    parser.add_argument("--fix_spk", action="store_true", default=False)
+    parser.add_argument("--fix_bhd", action="store_true", default=False)
+    parser.add_argument("--no_share_bhd", action="store_true", default=False)
+    parser.add_argument("--sample_how", type=str, default="gumbel")
+    parser.add_argument("--load", type=str, default="/home/grads/mogunleye/Research/EC_pretraining/EC_game_ckpt/model_92.11_800_4035.pt", help="load weights")
+    parser.add_argument("--no_write", action="store_true", default=False)
+    parser.add_argument("--no_terminal", action="store_true", default=False)
+    parser.add_argument("--reset_lsn", type=int, default=-1, help="reset listener")
+
+    args, remaining_args = parser.parse_known_args()
+    build_pretraining_dataset_from_llava1_5(args)
