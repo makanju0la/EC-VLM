@@ -60,7 +60,7 @@ The EC-VLM pipeline consists of three main stages:
 
 ---
 
-## 🗣️ EC Token Generation via Speaker-Listener Game
+## 🗣️ EC Token Generation via Referential Game
 
 ### Step 1: Train the Speaker-Listener Agents
 
@@ -72,3 +72,24 @@ Train agents in a referential game using image inputs. The **speaker** encodes i
   - **Dataset** = COCO
 
 > 🧪 We found that this hyperparameter setting provides a good balance between communication success and token entropy, yielding stable and transferable speaker representations.
+
+**Data**
+
+The data for the Speaker-Listener Agents training can be found here. [Google Drive](https://drive.google.com/drive/folders/1dBdGaZzvQ4yn-RMpDMxLlFNLzSSbkOWF?usp=sharing). This includes:
+
+- ```image_features```: Image features of coco-2014 (``coco.pt``) and Conceptual Captions (``cc.pt``) datasets from a pre-trained ResNet, to be used in EC pre-training.
+
+**Training**
+
+To train the Speaker-Listener Agents
+```bash
+cd ec-game
+python train.py
+```
+
+### Step 2: Generating EC Corpora
+
+
+
+
+
