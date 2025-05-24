@@ -106,9 +106,9 @@ At this step, Pretraining will depend on the VLM backbone you are experimenting 
 
 #### General Process for Pretraining: 
 - Clone the LLaVA code base
-- Convert the pretraining dataset to EC format using the conversion script we converted.
+- Convert the pretraining dataset to EC format using the conversion script we provided.
 - The conversion can be done after you've trained the EC game above.
-- After you have the EC pretraining dataset, you can then go ahead and run the pretraining and fintuning experiment of your VLM backbone. In this case, LLaVA
+- After you have the EC pretraining dataset, you can then go ahead and run the pretraining and finetuning experiment of your VLM backbone. In this case, LLaVA
 - Evaluate your experiment following the standard evaluation process if the VLM.
 - Then compare results. 
 
