@@ -1,0 +1,4 @@
+max_epoch 10
+lr 5e-5
+patch_image_size 512
+slurmstepd: error: *** JOB 172031 ON inf077 CANCELLED AT 2023-04-03T00:16:13 DUE TO TIME LIMIT ***
