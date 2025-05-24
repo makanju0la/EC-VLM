@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#Change Master port
-#Change GPU adresses
-#Change pretrain_mm_mlp_adapter. Latest used - Agent with 5 tokens
-#Change output_dir. Latest sequence 5
 deepspeed --master_port 29502 --include localhost:0,1,2,3 llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \

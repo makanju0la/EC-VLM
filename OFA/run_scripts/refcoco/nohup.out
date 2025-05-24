@@ -1,6 +1,0 @@
-max_epoch 10
-lr 5e-5
-patch_image_size 512
-max_epoch 10
-lr 5e-5
-patch_image_size 512

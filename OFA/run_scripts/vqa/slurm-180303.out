@@ -1,7 +1,0 @@
-e1
-e2
-e3
-max_epoch 15
-warmup_updates 
-lr 5e-5
-patch_image_size 480

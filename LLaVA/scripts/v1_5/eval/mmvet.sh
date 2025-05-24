@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python -m llava.eval.model_vqa \
-    --model-path /home/grads/mogunleye/Research/LLaVA/checkpoints/llava-merged-clip-full \
+    --model-path /home/directory/LLaVA/checkpoints/llava-merged-clip-full \
     --question-file ./playground/data/eval/mm-vet/llava-mm-vet.jsonl \
     --image-folder ./playground/data/eval/mm-vet/mm-vet/images \
     --answers-file ./playground/data/eval/mm-vet/answers/llava-v1.5-13b-clip-full.jsonl \

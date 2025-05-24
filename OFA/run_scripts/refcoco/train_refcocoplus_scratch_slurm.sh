@@ -1,19 +1,8 @@
 #!/bin/bash
-#SBATCH -J ofa
-#SBATCH -A virtual_presenter
-#SBATCH -p v100_normal_q
-#SBATCH --nodes=1
-#SBATCH -t 23:30:00
-#SBATCH --gres=gpu:2
-nvidia-smi --query-gpu=timestamp,name,pci.bus_id,driver_version,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --format=csv -l 3 > $SLURM_JOBID.gpu.log &
-
-#!/usr/bin/env
 
 # The port for communication. Note that if you want to run multiple tasks on the same machine,
 # you need to specify different port numbers.
 export MASTER_PORT=6064
-# export CUDA_VISIBLE_DEVICES=0
-# export GPUS_PER_NODE=1
 
 log_dir=./refcocoplus_scratch_logs   #change base on task (NL, EC, Scratch)
 save_dir=./refcocoplus_scratch_checkpoints    #change base on task (NL, EC, Scratch)

@@ -1,10 +1,5 @@
 #!/bin/bash
 
-#Changed once - data_path. Changed to random 100K.
-#Change Master port
-#Change GPU adresses
-#Change pretrain_mm_mlp_adapter. Latest used - Agent with 15 tokens
-#Change output_dir. Latest sequence 15
 deepspeed --master_port 29505 --include localhost:1,2,3,4,5,6,7 llava/train/train_mem.py \
     --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
     --deepspeed ./scripts/zero3.json \
@@ -20,7 +15,7 @@ deepspeed --master_port 29505 --include localhost:1,2,3,4,5,6,7 llava/train/trai
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-7b-clip-full-finetune-lora \
+    --output_dir ./checkpoints/llava-v1.5-7b-finetune-lora \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \

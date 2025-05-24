@@ -1,29 +1,19 @@
-#!/bin/bash
-#SBATCH -J ofa
-#SBATCH -A virtual_presenter
-#SBATCH -p v100_normal_q
-#SBATCH --nodes=1
-#SBATCH -t 23:30:00
-#SBATCH --gres=gpu:2
-nvidia-smi --query-gpu=timestamp,name,pci.bus_id,driver_version,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --format=csv -l 3 > $SLURM_JOBID.gpu.log &
-
-
-#!/usr/bin/env
+# #!/bin/bash
 
 # The port for communication. Note that if you want to run multiple tasks on the same machine,
 # you need to specify different port numbers.
-export MASTER_PORT=6063
+export MASTER_PORT=6064
 
-log_dir=./refcocoplus_logs
-save_dir=./refcocoplus_checkpoints
+log_dir=./new_refcoco_logs/ec_vre_only
+save_dir=./new_refcoco_checkpoints/ec_vre_only
 mkdir -p $log_dir $save_dir
 
 bpe_dir=../../utils/BPE
 user_dir=../../ofa_module
 
-data_dir=../../dataset/refcocoplus_data
+data_dir=/data/datasets/EC_pretraining/OFA/dataset/refcocoplus_data
 data=${data_dir}/refcocoplus_train.tsv,${data_dir}/refcocoplus_val.tsv
-restore_file=../../run_scripts/pretraining/checkpoints_refcoco/checkpoint_last.pt
+restore_file=../../run_scripts/pretraining/checkpoints_EC/vre_from_scratch/checkpoint_4_48000.pt #CHANGE THIS
 selected_cols=0,4,2,3
 
 task=refcoco
@@ -56,7 +46,7 @@ for max_epoch in {10,}; do
       save_path=${save_dir}/${max_epoch}"_"${lr}"_"${patch_image_size}
       mkdir -p $save_path
 
-      CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -m torch.distributed.launch --nproc_per_node=4 --master_port=${MASTER_PORT} ../../train.py \
+      CUDA_VISIBLE_DEVICES=0,1,3,4,5 python3 -m torch.distributed.launch --nproc_per_node=5 --master_port=${MASTER_PORT} ../../train.py \
           $data \
           --selected-cols=${selected_cols} \
           --bpe-dir=${bpe_dir} \
@@ -89,7 +79,7 @@ for max_epoch in {10,}; do
           --fixed-validation-seed=7 \
           --no-epoch-checkpoints --keep-best-checkpoints=1 \
           --save-interval=1 --validate-interval=1 \
-          --save-interval-updates=500 --validate-interval-updates=500 \
+          --save-interval-updates=1000 --validate-interval-updates=1000 \
           --eval-acc \
           --eval-args='{"beam":5,"min_len":4,"max_len_a":0,"max_len_b":4}' \
           --best-checkpoint-metric=score --maximize-best-checkpoint-metric \

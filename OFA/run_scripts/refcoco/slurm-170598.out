@@ -1,4 +1,0 @@
-max_epoch 10
-lr 5e-5
-patch_image_size 512
-slurmstepd: error: *** JOB 170598 ON inf074 CANCELLED AT 2023-03-28T21:13:24 DUE TO TIME LIMIT ***

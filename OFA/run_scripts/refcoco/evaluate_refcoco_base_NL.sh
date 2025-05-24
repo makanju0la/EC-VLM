@@ -3,7 +3,7 @@
 
 # The port for communication. Note that if you want to run multiple tasks on the same machine,
 # you need to specify different port numbers.
-export MASTER_PORT=6091
+export MASTER_PORT=6092
 export CUDA_VISIBLE_DEVICES=0,1
 export GPUS_PER_NODE=2
 
@@ -13,12 +13,11 @@ user_dir=../../ofa_module
 bpe_dir=../../utils/BPE
 selected_cols=0,4,2,3
 
-
 ######################### Evaluate Refcocoplus ##########################
 data=../../dataset/refcocoplus_data/refcocoplus_val.tsv
 # path=../../checkpoints/refcocoplus_base_best.pt
-path=../../run_scripts/refcoco/refcocoplus_scratch_checkpoints/10_5e-5_512/checkpoint_best.pt
-result_path=../../results/refcocoplus_scratch
+path=../../run_scripts/refcoco/refcocoplus_checkpoints/10_5e-5_512/checkpoint_best.pt
+result_path=../../results/refcocoplus_nl
 split='refcocoplus_val'
 python3 -m torch.distributed.launch --nproc_per_node=${GPUS_PER_NODE} --master_port=${MASTER_PORT} ../../evaluate.py \
     ${data} \
@@ -41,8 +40,8 @@ python3 -m torch.distributed.launch --nproc_per_node=${GPUS_PER_NODE} --master_p
 
 data=../../dataset/refcocoplus_data/refcocoplus_testA.tsv
 # path=../../checkpoints/refcocoplus_base_best.pt
-path=../../run_scripts/refcoco/refcocoplus_scratch_checkpoints/10_5e-5_512/checkpoint_best.pt
-result_path=../../results/refcocoplus_scratch
+path=../../run_scripts/refcoco/refcocoplus_checkpoints/10_5e-5_512/checkpoint_best.pt
+result_path=../../results/refcocoplus_nl
 split='refcocoplus_testA'
 python3 -m torch.distributed.launch --nproc_per_node=${GPUS_PER_NODE} --master_port=${MASTER_PORT} ../../evaluate.py \
     ${data} \
@@ -65,8 +64,8 @@ python3 -m torch.distributed.launch --nproc_per_node=${GPUS_PER_NODE} --master_p
 
 data=../../dataset/refcocoplus_data/refcocoplus_testB.tsv
 # path=../../checkpoints/refcocoplus_base_best.pt
-path=../../run_scripts/refcoco/refcocoplus_scratch_checkpoints/10_5e-5_512/checkpoint_best.pt
-result_path=../../results/refcocoplus_scratch
+path=../../run_scripts/refcoco/refcocoplus_checkpoints/10_5e-5_512/checkpoint_best.pt
+result_path=../../results/refcocoplus_nl
 split='refcocoplus_testB'
 python3 -m torch.distributed.launch --nproc_per_node=${GPUS_PER_NODE} --master_port=${MASTER_PORT} ../../evaluate.py \
     ${data} \

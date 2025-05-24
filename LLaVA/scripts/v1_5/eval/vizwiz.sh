@@ -3,7 +3,7 @@
 #run evaluations on images in /test, taking questions from /vizwiz/llava_test.jsonl 
 #and putting results in /answers/llava-v1.5-13b.jsonl
 python -m llava.eval.model_vqa_loader \
-    --model-path /home/grads/mogunleye/Research/LLaVA/checkpoints/llava-v1.5-13b \
+    --model-path /home/directory/LLaVA/checkpoints/llava-v1.5-13b \
     --question-file ./playground/data/eval/vizwiz/llava_test.jsonl \
     --image-folder ./playground/data/eval/vizwiz/test \
     --answers-file ./playground/data/eval/vizwiz/answers/llava-v1.5-13b.jsonl \

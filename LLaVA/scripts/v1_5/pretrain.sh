@@ -8,8 +8,8 @@ deepspeed    --include localhost:4,5,6,7 llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
-    --data_path /home/grads/mogunleye/Research/EC_pretraining/EC_data/LLaVa/LLaVA-Pretrain/vocab_size_exp/blip_laion_cc_sbu_558k_ec_vocab_10000.json \
-    --image_folder /home/grads/mogunleye/Research/EC_pretraining/EC_data/LLaVa/LLaVA-Pretrain/images_558_laoin_cc_sbu \
+    --data_path /home/directory/ec_data/LLaVa/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder /home/directory/ec_data/LLaVa/LLaVA-Pretrain/images_558_laoin_cc_sbu \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
@@ -17,7 +17,7 @@ deepspeed    --include localhost:4,5,6,7 llava/train/train_mem.py \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-7b-pretrain-ec-vocab10000-100K \
+    --output_dir ./checkpoints/llava-v1.5-7b-pretrain \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \

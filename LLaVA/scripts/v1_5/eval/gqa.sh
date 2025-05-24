@@ -11,7 +11,7 @@ GQADIR="./playground/data/eval/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path /home/grads/mogunleye/Research/LLaVA/checkpoints/llava-v1.5-13b \
+        --model-path /home/directory/LLaVA/checkpoints/llava-v1.5-13b \
         --question-file ./playground/data/eval/gqa/$SPLIT.jsonl \
         --image-folder ./playground/data/eval/gqa/data/images \
         --answers-file ./playground/data/eval/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl \
