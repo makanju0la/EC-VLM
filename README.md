@@ -95,6 +95,22 @@ cd EC-Pretraining/scripts/corpus-generation
 bash convert.sh
 ```
 
+### Step 3: Pretraining a VLM Backbone with the generated EC corpora.
+
+At this step, Pretraining will depend on the VLM backbone you are experimenting on. For example if you are experimenting with LLaVA, then run the following code to pretrain the LLaVA model on the generated EC VLM corpus:
+
+*LLaVA Pretraining*: https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#train
+
+
+*LLaVA Finetuning*: https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#visual-instruction-tuning
+
+#### General Process for Pretraining: 
+- Clone the LLaVA code base
+- Convert the pretraining dataset to EC format using the conversion script we converted.
+- The conversion can be done after you've trained the EC game above.
+- After you have the EC pretraining dataset, you can then go ahead and run the pretraining and fintuning experiment of your VLM backbone. In this case, LLaVA
+- Evaluate your experiment following the standard evaluation process if the VLM.
+- Then compare results. 
 
 
 
