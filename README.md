@@ -142,7 +142,7 @@ bash scripts/v1_5/pretrain.sh
   - [Visual Genome Part 1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip)  
     [Part 2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
 
-Organize the data under `./playground/data/`:
+Organize the data under `./playground/data/`
 
 #### 2. Start Instruction Tuning
 
@@ -172,6 +172,6 @@ bash scripts/v1_5/finetune_lora.sh
 
 LLaVA v1.5 is evaluated across a diverse set of 12 benchmarks. To ensure reproducibility and consistency with the real-time chat demo, all evaluations use **greedy decoding** rather than beam search.
 
-For full details, see the [Evaluation Guide](https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md).
+For full details, see the LLaVA [Evaluation Guide](https://github.com/makanju0la/EC-VLM/blob/main/Evaluation.md).
 
 
