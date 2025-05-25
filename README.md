@@ -1,28 +1,23 @@
 ## EC-VLM: Emergent Corpus Pre-training Benefits Vision Language Models
 
-Our work explores how **emergent communication (EC) tokens**, learned through agent-based referential games, can serve as a scalable and language-free alternative for pretraining vision-language models (VLMs). We hypothesize and show that EC tokens are discrete, interpretable representations grounded in vision and optimized through task-driven communication and can provide an effective substitute where natural language annotations are unavailable or limited.
+Our work explores how **emergent communication (EC) tokens**, learned through agent-based referential games, can serve as a scalable and language-free alternative for pretraining vision-language models (VLMs). We demonstrate that EC tokens are discrete, interpretable representations grounded in vision and optimized through task-driven communication and can provide an effective substitute where natural language annotations are unavailable or limited.
 
 ---
 
 ## Install
 
-To install and reproduce our experiments, it may be recommended to have different conda enviroments for different use cases. For example, the enviroment used to train the Speaker agents is quite different from the one used to train LLaVA-1.5-EC models. 
-We have provided some quick started codes below. 
+To install and reproduce our experiments, we have provided some quick-start codes below. 
+Clone this repository and:
 
-1. Clone this repository and navigate to EC-Pretraining folder
-```bash
-git clone https://github.com/makanju0la/EC-Pretraining.git
-cd EC-Pretraining
-```
-
-2. Install package to train Speaker agents
+1. Install to train Speaker agents
 ```shell
 conda create -n ec-nl python=3.8 -y
 conda activate ec-nl
 Install pytorch 1.8. 
 pip install scipy==1.4.0 transformers==4.4.2
 ```
-3. Install package to Run OFA experiments
+
+2. Install to run OFA experiments
 ```bash
 cd OFA
 conda create -n ofa python=3.7.4 -y
@@ -31,8 +26,7 @@ Install pytorch 1.8.1.
 pip install torchvision==0.9.1
 pip install -r requirements.txt
 ```
-4. Install package to run LLaVA experiments
-
+4. Install to run LLaVA experiments
 *navigate to LLaVA folder*
 ```bash
 cd LLaVA
@@ -88,19 +82,18 @@ python train.py
 ```
 
 ### Step 2: Generating EC Corpora
-The next step in the EC-Pretraining experiment, after training the referential game, is to convert the natural language of the pretraining dataset of the specific VLM you are working on to an EC version. Run the following code for the conversion:
+The next step in the EC-Pretraining experiment, after training the referential game, is to convert the natural language of the pretraining dataset of the specific VLM to an EC version. 
+Run the following code for the conversion:
 
 ```bash
-cd EC-Pretraining/scripts/corpus-generation
 bash convert.sh
 ```
 
 ### Step 3: Pretraining a VLM Backbone with the generated EC corpora.
 
-At this step, Pretraining will depend on the VLM backbone you are experimenting on. For example if you are experimenting with LLaVA, then run the following code to pretrain the LLaVA model on the generated EC VLM corpus:
+At this step, pretraining will depend on the VLM backbone. For example, for LLaVA, run the following code to pretrain the LLaVA model on the generated EC VLM corpus:
 
 *LLaVA Pretraining*: https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#train
-
 
 *LLaVA Finetuning*: https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#visual-instruction-tuning
 
