@@ -19,7 +19,7 @@ cd EC-Pretraining
 ```shell
 conda create -n ec-nl python=3.8 -y
 conda activate ec-nl
-Install pytorch 1.8. Install from https://pytorch.org/get-started/previous-versions/ which contains previous version of pytorch that corresponss with your CUDA version.
+Install pytorch 1.8. 
 pip install scipy==1.4.0 transformers==4.4.2
 ```
 3. Install package to Run OFA experiments
@@ -27,7 +27,7 @@ pip install scipy==1.4.0 transformers==4.4.2
 cd OFA
 conda create -n ofa python=3.7.4 -y
 conda activate ofa
-Install pytorch 1.8.1. Install from https://pytorch.org/get-started/previous-versions/ which contains previous version of pytorch that corresponss with your CUDA version.
+Install pytorch 1.8.1. 
 pip install torchvision==0.9.1
 pip install -r requirements.txt
 ```
