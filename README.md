@@ -103,7 +103,7 @@ At this step, pretraining will depend on the VLM backbone. For example, for LLaV
 3. If working with LLaVA or OFA, we have prepared starter codes for you in our repositoy.
 4. Next, convert the pretraining dataset to EC format using the conversion script we provided.
 5. The conversion can be done after you've trained the EC referential game described in [Step 1.](https://github.com/makanju0la/EC-VLM?tab=readme-ov-file#step-1-train-the-speaker-listener-agents)
-6. After you have the EC pretraining dataset, you can then go ahead and run the pretraining and finetuning experiment of your VLM backbone. For example, if working with LLaVA, you would run the following after following the instructions in the link provided in [Step 3](https://github.com/makanju0la/EC-VLM?tab=readme-ov-file#step-3-pretraining-a-vlm-backbone-with-the-generated-ec-corpora)to learn how to properly set up your environment for LLaVA training. 
+6. After you have the EC pretraining dataset, you can then go ahead and run the pretraining and finetuning experiment of your VLM backbone. For example, if working with LLaVA, you would run the following after following the instructions in the link provided in [Step 3](https://github.com/makanju0la/EC-VLM?tab=readme-ov-file#step-3-pretraining-a-vlm-backbone-with-the-generated-ec-corpora) to learn how to properly set up your environment for LLaVA training. 
 
 Pretrain
 
