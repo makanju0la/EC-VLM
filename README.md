@@ -54,9 +54,7 @@ The EC-VLM pipeline consists of three main stages:
 
 ---
 
-## 🗣️ EC Token Generation via Referential Game
-
-### Step 1: Train the Speaker-Listener Agents
+## Step 1: 🗣️ Train the Speaker-Listener Agents
 
 Train agents in a referential game using image inputs. The **speaker** encodes images into discrete EC tokens, and the **listener** learns to resolve the correct referent based on these tokens.
 
@@ -80,8 +78,8 @@ To train the Speaker-Listener Agents
 cd ec-game
 python train.py
 ```
-
-### Step 2: Generating EC Corpora
+---
+## Step 2: Generating EC Corpora
 The next step in the EC-Pretraining experiment, after training the referential game, is to convert the natural language of the pretraining dataset of the specific VLM to an EC version. 
 Run the following code for the conversion:
 
@@ -89,37 +87,91 @@ Run the following code for the conversion:
 bash convert.sh
 ```
 
-### Step 3: Pretraining a VLM Backbone with the generated EC corpora.
+---
+## Step 3: Pretraining a VLM Backbone with the generated EC corpora.
 
 At this step, pretraining will depend on the VLM backbone. For example, for LLaVA, run the following code to pretrain the LLaVA model on the generated EC VLM corpus:
 
-*LLaVA Pretraining*: https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#train
+### LLaVA Pretraining
+> https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#train
 
-*LLaVA Finetuning*: https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#visual-instruction-tuning
 
-#### General Process for Pretraining: 
-1. Decide on a VLM backbone (e.g OFA). You might also experiment on a Large Vision Language Model like LLaVA or MiniGPT-4. In our paper, we conducted extensive experiments and ablation on LLaVA. 
-2. Examine the pretraining dataset of the VLM of choice in prepration for conversion to an EC format. 
-3. If working with LLaVA or OFA, we have prepared starter codes for you in our repositoy.
-4. Next, convert the pretraining dataset to EC format using the conversion script we provided.
-5. The conversion can be done after you've trained the EC referential game described in [Step 1.](https://github.com/makanju0la/EC-VLM?tab=readme-ov-file#step-1-train-the-speaker-listener-agents)
-6. After you have the EC pretraining dataset, you can then go ahead and run the pretraining and finetuning experiment of your VLM backbone. For example, if working with LLaVA, you would run the following after following the instructions in the link provided in [Step 3](https://github.com/makanju0la/EC-VLM?tab=readme-ov-file#step-3-pretraining-a-vlm-backbone-with-the-generated-ec-corpora) to learn how to properly set up your environment for LLaVA training. 
+LLaVA training involves two main stages:
 
-Pretrain
+1. **Feature Alignment**: Align a *frozen* pretrained vision encoder with a *frozen* LLM using 558K image-text pairs from a subset of LAION-CC-SBU.
+2. **Visual Instruction Tuning**: Train the model to follow multimodal instructions using a mix of GPT-generated samples and academic VQA datasets.
+
+> Recommended hardware: 8×A100 GPUs with 80GB memory  
+> To train on fewer GPUs, adjust:
+> ```
+> per_device_train_batch_size × gradient_accumulation_steps × num_gpus = constant global batch size
+> ```
+
+---
+
+### Vicuna Checkpoints
+
+The base LLM is [Vicuna v1.5](https://lmsys.org/blog/2023-03-30-vicuna/), an instruction-tuned model.  
+This checkpoint will be downloaded automatically when using the provided training scripts.
+
+
+### Stage 1: Pretraining (Feature Alignment)
+
+- **Dataset**: [LAION-CC-SBU 558K subset (with BLIP captions)](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain)
+- **Training Time**:
+  - LLaVA-13B: ~5.5 hours (8×A100-80G)
+  - LLaVA-7B: ~3.5 hours
+- **Resolution**: 336px
+- **Script**: 
+```bash
+cd EC_VLM/LLaVA
+bash scripts/v1_5/pretrain.sh
+```
+
+### LLaVA Finetuning - Stage 2 
+> https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#visual-instruction-tuning
+
+#### 1. Download Instruction Tuning Data
+
+- Annotations: [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json)
+- Image datasets:
+  - [COCO train2017](http://images.cocodataset.org/zips/train2017.zip)
+  - [GQA](https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip)
+  - [OCR-VQA (script)](https://drive.google.com/drive/folders/1_GYPY5UkUy7HIcR0zq3ZCFgeZN7BAfm_?usp=sharing) *(use `.jpg` format)*
+  - [TextVQA](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip)
+  - [Visual Genome Part 1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip)  
+    [Part 2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
+
+Organize the data under `./playground/data/`:
+
+#### 2. Start Instruction Tuning
+
+- Download projectors: [Model Zoo](https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md). You may download pretrained projectors and checkpoints if neccessary. LLaVA recommends avoiding legacy projectors due to code compatibility issues. 
+- **Training Time**:
+  - LLaVA-13B: ~20 hours (8×A100-80G)
+  - LLaVA-7B: ~10 hours (8×A100-40G)
+- **Script**: 
 
 ```bash
 cd EC_VLM/LLaVA
 bash scripts/v1_5/pretrain.sh
 ```
 
-Fintune 
+### Low GPU Memory Options
+If you have low GPU memory, you can Use *LoRA* (Parameter-Efficient Fine-Tuning)
+-  You could run 7B model in ~4 NVIDIA A40G GPUs. Make sure `per_device_train_batch_size*gradient_accumulation_steps` is the same as the provided script for best reproducibility.
+- You may replace `zero3.json` with `zero3_offload.json` which offloads some parameters to CPU RAM. This slows down the training speed though.
+- Script: 
 
 ```bash
 cd EC_VLM/LLaVA
-bash scripts/v1_5/pretrain.sh
+bash scripts/v1_5/finetune_lora.sh
 ```
 
-7. If you've successfully pretrained and finetuned your EC custom VLM model, evaluation is relatively easy. You just need to follow the standard evaluation process that the the VLM provides. 
-8. Last step is to compare the results between models derived after training on pretraining data with natural language with the ones derived after pretraining on EC tokens. 
+## 📊 Evaluation
+
+LLaVA v1.5 is evaluated across a diverse set of 12 benchmarks. To ensure reproducibility and consistency with the real-time chat demo, all evaluations use **greedy decoding** rather than beam search.
+
+For full details, see the [Evaluation Guide](https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md).
 
 
